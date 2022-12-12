@@ -54,10 +54,8 @@ export const Graphs = ({children}) => {
     setDistances(newDistances)
   }
 
-  const updateDistances = ({visited, minNode}) => {
-    const updatedDistances = [...distances];
-
-    updatedDistances.forEach(el => {
+  const updateDistances = ({visited, minNode, newDistances}) => {
+    newDistances.forEach(el => {
       if (visited.includes(el.node)) return 
 
       const edge = edges.find(({
@@ -83,26 +81,25 @@ export const Graphs = ({children}) => {
 
       el.weight = newWeight;
     })
-
-    setDistances(updatedDistances)
   }
 
-  const findAllShortestPaths = () => {
-    const rootNode = vertices[0];
+  const findAllShortestPaths = (rootNode) => {
     const visited = [rootNode];
-    initDistances(rootNode); 
+    const newDistances = [...distances];
     
     while (visited.length !== vertices.length) {
-      const unvisited = distances.filter(({node}) => !visited.includes(node));
+      const unvisited = newDistances.filter(({node}) => !visited.includes(node));
       const minNode = minBy(unvisited, vertex => vertex.weight);
       visited.push(minNode.node)
       
-      
       updateDistances({
         visited,
-        minNode
+        minNode,
+        newDistances
       })
     }
+
+    setDistances(newDistances )
   }
 
   // const breathFirstSearch = ({tree, rootNode, searchVal}) => {
@@ -138,17 +135,21 @@ export const Graphs = ({children}) => {
   // }
 
   const runDejkstra = () => {
-    findAllShortestPaths()
+    findAllShortestPaths(vertices[0]);
+  }
+
+  const initGraph = () => {
+    initDistances(vertices[0]);
   }
   
 
   useEffect(() => {
     const vertices = [
-      new Vertex('A'),
-      new Vertex('B'),
-      new Vertex('C'),
-      new Vertex('D'),
-      new Vertex('E')
+      new Vertex('1'),
+      new Vertex('2'),
+      new Vertex('3'),
+      new Vertex('4'),
+      new Vertex('5')
     ]
   
     const edges = [
@@ -164,6 +165,8 @@ export const Graphs = ({children}) => {
     vertices.forEach(verticle => addVertex(verticle))
     edges.forEach(edge => addEdge(edge));
 
+    
+
     return () => {
       setVerticies([]);
       setEdges([])
@@ -175,7 +178,9 @@ export const Graphs = ({children}) => {
     <div>
       {children}
       {/* <button onClick={startBreathAlgorithm}>Search</button> */}
-      <button onClick={runDejkstra}>Dejkstra</button>
+      
+      <button onClick={runDejkstra}>Run Dejkstra</button>
+      <button onClick={initGraph}>Init Graph</button>
       
       <ul>
         {distances.map(({node, weight, path}, i) => {
