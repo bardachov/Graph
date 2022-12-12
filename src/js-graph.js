@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import minBy from 'lodash/minBy';
+import { useRef } from "react";
 
 
 class Vertex {
@@ -22,7 +23,10 @@ export const Graphs = ({children}) => {
   const [vertices, setVerticies] = useState([]);
   const [edges, setEdges] = useState([]);
   const [distances, setDistances] = useState([]);
-
+  
+  const startNodeRef = useRef();
+  const endNodeRef = useRef();
+  const [shortestPath, setshortestPath] = useState();
 
   const addVertex = (vertex) => {
     setVerticies(vertices => [...vertices, vertex])
@@ -90,16 +94,27 @@ export const Graphs = ({children}) => {
     while (visited.length !== vertices.length) {
       const unvisited = newDistances.filter(({node}) => !visited.includes(node));
       const minNode = minBy(unvisited, vertex => vertex.weight);
-      visited.push(minNode.node)
       
-      updateDistances({
-        visited,
-        minNode,
-        newDistances
-      })
+      if (!minNode) {
+        break
+      }
+
+      visited.push(minNode.node)
+        
+        updateDistances({
+          visited,
+          minNode,
+          newDistances
+        })
     }
 
-    setDistances(newDistances )
+    setDistances(newDistances)
+  }
+
+  const findShortestPath = (startNode, finishNode) => {
+    
+    findAllShortestPaths(startNode);
+    setshortestPath(distances.find(el => el.node === finishNode))
   }
 
   // const breathFirstSearch = ({tree, rootNode, searchVal}) => {
@@ -135,11 +150,20 @@ export const Graphs = ({children}) => {
   // }
 
   const runDejkstra = () => {
-    findAllShortestPaths(vertices[0]);
+    const start = vertices.find(({value}) => value === startNodeRef.current.value);
+    findAllShortestPaths(start);
+  }
+
+  const runShortest = () => {
+    const start = vertices.find(({value}) => value === startNodeRef.current.value);
+    const end = vertices.find(({value}) => value === endNodeRef.current.value);
+
+    findShortestPath(start, end)
   }
 
   const initGraph = () => {
-    initDistances(vertices[0]);
+    const start = vertices.find(({value}) => value === startNodeRef.current.value);
+    initDistances(start);
   }
   
 
@@ -174,15 +198,48 @@ export const Graphs = ({children}) => {
 
   }, [])
 
+  const Path = () => {
+    if (shortestPath) {
+      return (
+        <>
+          <p>Shortest path to Vertex: {shortestPath.node.value}</p>
+          <p>{shortestPath.path.map(({value}, k) => <b key={k}>{value}{"->"}</b>)}{shortestPath.node.value}</p>
+          <p>Weight: {shortestPath.weight}</p>
+        </>
+      )
+    } else {
+      return ''
+    }
+  }
+
   return (
     <div>
       {children}
       {/* <button onClick={startBreathAlgorithm}>Search</button> */}
       
-      <button onClick={runDejkstra}>Run Dejkstra</button>
-      <button onClick={initGraph}>Init Graph</button>
+      <div>
+        <p style={{margin: 0}}>Set root node number. Then init grapth</p>
+        <input type="text"ref={startNodeRef} />
+        <button onClick={initGraph}>Init Graph</button>
+      </div>
+      <p></p>
       
-      <ul>
+      <div>
+        <span style={{margin: 0}}>Find all shortest paths </span>
+        <button onClick={runDejkstra}>Run Dejkstra</button>
+      </div>
+
+      <div>
+        <span style={{margin: 0}}>Find shortest path to Vertex: </span>
+        <input type="text"ref={endNodeRef} />
+        <button onClick={runShortest}>Run Dejkstra</button>
+        <Path />
+      </div>
+      
+      <br/>
+      <br/>
+      <p style={{textAlign: "left"}}>All paths from root:</p>
+      <ul style={{listStyle: 'none', textAlign: "left"}}>
         {distances.map(({node, weight, path}, i) => {
           return (
             <li key={i}>
